@@ -3,7 +3,7 @@
 /**
  * Plugin Name: ATD Integration
  * Plugin URI: https://www.inspry.com
- * Description:
+ * Description: A WordPress plugin that allows placing orders via ATD's API.
  * Version: 1.0.0
  * Requires at least: 6.6.2
  * Requires PHP: 8.0
