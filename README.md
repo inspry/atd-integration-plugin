@@ -16,6 +16,10 @@ Requires the following PHP constants to be defined. It is recommended to place t
 
 ## Changelog
 
+**v2.0.0**:
+
+- Use `$wpdb->prepare` on SQL queries.
+
 **v1.0.1**: Remove unused atd_inventory_update WP-CLI command.
 
 **v1.0.0**: Initial release.

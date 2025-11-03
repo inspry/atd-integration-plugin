@@ -38,34 +38,35 @@ function atd_tracking_numbers_callback() {
 		die;
 	}
 
-	$all_atd_items = $wpdb->get_results( "SELECT
-    order_id,
-    order_itemmeta.order_item_id AS order_item_id,
-    meta_value
-FROM
-    {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta
-LEFT JOIN {$wpdb->prefix}woocommerce_order_items AS order_items
-ON
-    order_itemmeta.order_item_id = order_items.order_item_id
-LEFT JOIN {$wpdb->posts} ON {$wpdb->posts}.ID = order_items.order_id
-WHERE
-    meta_key = 'atd_order_id' AND {$wpdb->posts}.post_date BETWEEN CURDATE() - INTERVAL 1 MONTH AND CURDATE() + INTERVAL 1 DAY AND {$wpdb->posts}.post_status NOT IN(
-        'wc-refunded',
-        'wc-failed',
-        'wc-cancelled',
-        'wc-completed',
-        'wc-completed-package'
-    ) AND order_itemmeta.order_item_id NOT IN(
-    SELECT
-        order_item_id
-    FROM
-        {$wpdb->prefix}woocommerce_order_itemmeta
-    WHERE
-        meta_key = 'atd_order_tracking_number'
-)
-ORDER BY
-    order_id
-ASC" );
+	$all_atd_items = $wpdb->get_results( $wpdb->prepare(
+		"SELECT
+		    order_id,
+		    order_itemmeta.order_item_id AS order_item_id,
+		    meta_value
+		FROM
+		    {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta
+		LEFT JOIN {$wpdb->prefix}woocommerce_order_items AS order_items
+		ON
+		    order_itemmeta.order_item_id = order_items.order_item_id
+		LEFT JOIN {$wpdb->posts} ON {$wpdb->posts}.ID = order_items.order_id
+		WHERE
+		    meta_key = %s
+		    AND {$wpdb->posts}.post_date BETWEEN CURDATE() - INTERVAL 1 MONTH AND CURDATE() + INTERVAL 1 DAY
+		    AND {$wpdb->posts}.post_status NOT IN(%s, %s, %s, %s, %s)
+		    AND order_itemmeta.order_item_id NOT IN(
+		        SELECT order_item_id
+		        FROM {$wpdb->prefix}woocommerce_order_itemmeta
+		        WHERE meta_key = %s
+		    )
+		ORDER BY order_id ASC",
+		'atd_order_id',
+		'wc-refunded',
+		'wc-failed',
+		'wc-cancelled',
+		'wc-completed',
+		'wc-completed-package',
+		'atd_order_tracking_number'
+	) );
 
 	foreach ( $all_atd_items as $row ) {
 		if ( ! isset( $row->meta_value ) || empty( $row->meta_value ) ) {
@@ -112,7 +113,12 @@ XML;
 			$trackingUrl    = (string) $response->Body->getOrderDetailResponse->orderDetail->orderLines->orderLine->fulfillments->fulfillment->trackingUrl;
 			$provider       = (string) $response->Body->getOrderDetailResponse->orderDetail->orderLines->orderLine->fulfillments->fulfillment->shipMethod;
 			wc_update_order_item_meta( $row->order_item_id, 'atd_order_tracking_number', $trackingNumber );
-			$tracking = $wpdb->get_var( "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id = '{$row->order_id}' AND meta_key = '_wc_shipment_tracking_items' AND meta_value LIKE '%{$trackingNumber}%'" );
+			$tracking = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id = %d AND meta_key = %s AND meta_value LIKE %s",
+				$row->order_id,
+				'_wc_shipment_tracking_items',
+				'%' . $wpdb->esc_like( $trackingNumber ) . '%'
+			) );
 
 			if ( empty( $tracking ) ) {
 				if ( false !== strpos( $provider, 'UPS' ) ) {
@@ -129,45 +135,58 @@ XML;
 
 	$shipped_atd             = array();
 	$non_atd_wheel_tire      = false;
-	$shipped_atd_order_items = $wpdb->get_results( "SELECT
-    order_id,
-    meta_value AS product_id,
-    {$wpdb->prefix}woocommerce_order_itemmeta.order_item_id
-FROM
-    {$wpdb->prefix}woocommerce_order_itemmeta
-LEFT JOIN {$wpdb->prefix}woocommerce_order_items ON {$wpdb->prefix}woocommerce_order_itemmeta.order_item_id = {$wpdb->prefix}woocommerce_order_items.order_item_id
-WHERE
-    {$wpdb->prefix}woocommerce_order_itemmeta.order_item_id IN(
-    SELECT
-        {$wpdb->prefix}woocommerce_order_items.order_item_id AS order_item_id
-    FROM
-        {$wpdb->prefix}woocommerce_order_itemmeta
-    LEFT JOIN {$wpdb->prefix}woocommerce_order_items ON {$wpdb->prefix}woocommerce_order_itemmeta.order_item_id = {$wpdb->prefix}woocommerce_order_items.order_item_id
-    LEFT JOIN {$wpdb->posts} ON {$wpdb->posts}.ID = {$wpdb->prefix}woocommerce_order_items.order_id
-    WHERE
-	{$wpdb->posts}.post_date BETWEEN CURDATE() - INTERVAL 1 MONTH AND CURDATE() + INTERVAL 1 DAY AND meta_key = 'atd_order_tracking_number' AND post_status NOT IN(
-            'wc-refunded',
-            'wc-failed',
-            'wc-cancelled',
-            'wc-completed',
-            'wc-completed-package'
-        )) AND meta_key = '_product_id'
-    ORDER BY
-        order_id
-    ASC" );
+	$shipped_atd_order_items = $wpdb->get_results( $wpdb->prepare(
+		"SELECT
+		    order_id,
+		    meta_value AS product_id,
+		    outer_meta.order_item_id
+		FROM
+		    {$wpdb->prefix}woocommerce_order_itemmeta AS outer_meta
+		LEFT JOIN {$wpdb->prefix}woocommerce_order_items AS outer_items ON outer_meta.order_item_id = outer_items.order_item_id
+		WHERE
+		    outer_meta.order_item_id IN(
+		        SELECT inner_items.order_item_id AS order_item_id
+		        FROM {$wpdb->prefix}woocommerce_order_itemmeta AS inner_meta
+		        LEFT JOIN {$wpdb->prefix}woocommerce_order_items AS inner_items ON inner_meta.order_item_id = inner_items.order_item_id
+		        LEFT JOIN {$wpdb->posts} ON {$wpdb->posts}.ID = inner_items.order_id
+		        WHERE
+		            {$wpdb->posts}.post_date BETWEEN CURDATE() - INTERVAL 1 MONTH AND CURDATE() + INTERVAL 1 DAY
+		            AND inner_meta.meta_key = %s
+		            AND {$wpdb->posts}.post_status NOT IN(%s, %s, %s, %s, %s)
+		    )
+		    AND outer_meta.meta_key = %s
+		ORDER BY order_id ASC",
+		'atd_order_tracking_number',
+		'wc-refunded',
+		'wc-failed',
+		'wc-cancelled',
+		'wc-completed',
+		'wc-completed-package',
+		'_product_id'
+	) );
 
 	foreach ( $shipped_atd_order_items as $item ) {
 		$shipped_atd[ $item->order_id ][] = $item->order_item_id;
 	}
 
 	foreach ( $shipped_atd as $order_id => $order_items ) {
-		$non_atd_items = $wpdb->get_results( "SELECT
-    {$wpdb->prefix}woocommerce_order_itemmeta.meta_value AS product_id
-FROM
-    `{$wpdb->prefix}woocommerce_order_items`
-LEFT JOIN {$wpdb->prefix}woocommerce_order_itemmeta ON {$wpdb->prefix}woocommerce_order_itemmeta.order_item_id = {$wpdb->prefix}woocommerce_order_items.order_item_id
-WHERE
-{$wpdb->prefix}woocommerce_order_items.order_item_id NOT IN (" . implode( ",", $order_items ) . ") AND `order_item_type` = 'line_item' AND `order_id` = '{$order_id}' AND {$wpdb->prefix}woocommerce_order_itemmeta.meta_key = '_product_id'" );
+		// Create placeholders for the IN clause
+		$placeholders = implode( ',', array_fill( 0, count( $order_items ), '%d' ) );
+		$query_params = array_merge( $order_items, array( $order_id ) );
+
+		$non_atd_items = $wpdb->get_results( $wpdb->prepare(
+			"SELECT
+			    order_itemmeta.meta_value AS product_id
+			FROM
+			    {$wpdb->prefix}woocommerce_order_items AS order_items
+			LEFT JOIN {$wpdb->prefix}woocommerce_order_itemmeta AS order_itemmeta ON order_itemmeta.order_item_id = order_items.order_item_id
+			WHERE
+			    order_items.order_item_id NOT IN ($placeholders)
+			    AND order_items.order_item_type = 'line_item'
+			    AND order_items.order_id = %d
+			    AND order_itemmeta.meta_key = '_product_id'",
+			$query_params
+		) );
 
 		if ( empty( $non_atd_items ) ) {
 			$order_obj = wc_get_order( $order_id );
