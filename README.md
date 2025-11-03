@@ -18,6 +18,10 @@ Requires the following PHP constants to be defined. It is recommended to place t
 
 **v2.0.0**:
 
+- Removes order lock meta if an error occurs.
+- AJAX endpoints now have user capability checks.
+- AJAX endpoints now have more structured and meaningful responses.
+- AJAX endpoints now validate user inputs.
 - Remove cURL options that disabled SSL validation.
 - Use `$wpdb->prepare` on SQL queries.
 

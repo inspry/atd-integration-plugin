@@ -276,27 +276,32 @@ function atd_wheel_inventory_page() {
 }
 
 add_action( 'wp_ajax_atd_inventory_scrubber', function () {
+	// Check user capabilities
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( 'Insufficient permissions.', 403 );
+	}
+
+	// Validate and sanitize input
+	$type = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : 'wheel';
+	$page = isset( $_GET['p'] ) ? absint( $_GET['p'] ) : 1;
+
+	if ( ! in_array( $type, array( 'wheel', 'tire' ), true ) ) {
+		wp_send_json_error( 'Invalid type parameter.', 400 );
+	}
+
 	@ini_set( 'max_execution_time', 86400 );
 	@set_time_limit( 86400 );
 
-	$tag = 'atdw';
-
-	if ( isset( $_GET['type'] ) && 'tire' == $_GET['type'] ) {
-		$tag = 'atdt';
-	}
+	$tag = ( 'tire' === $type ) ? 'atdt' : 'atdw';
 
 	$username = defined( 'ATD_USERNAME' ) ? ATD_USERNAME : null;
-
-	if ( empty ( $username ) ) {
-		echo "No ATD_USERNAME constant configured.";
-		die;
+	if ( empty( $username ) ) {
+		wp_send_json_error( 'ATD_USERNAME constant not configured.', 500 );
 	}
 
 	$password = defined( 'ATD_PASSWORD' ) ? ATD_PASSWORD : null;
-
-	if ( empty ( $password ) ) {
-		echo "No ATD_PASSWORD constant configured.";
-		die;
+	if ( empty( $password ) ) {
+		wp_send_json_error( 'ATD_PASSWORD constant not configured.', 500 );
 	}
 
 	$atd_tires = get_posts( array(
@@ -310,7 +315,7 @@ add_action( 'wp_ajax_atd_inventory_scrubber', function () {
 		),
 		'fields'         => 'ids',
 		'posts_per_page' => '2000',
-		'paged'          => ( ( isset( $_GET['p'] ) && is_numeric( $_GET['p'] ) ) ? $_GET['p'] : 1 )
+		'paged'          => $page
 	) );
 	$skus      = array();
 
@@ -384,10 +389,18 @@ XML;
 	}
 
 	if ( empty( $skus ) ) {
-		echo 'All products in this batch exist in the ATD database';
+		wp_send_json_success( array(
+			'message' => 'All products in this batch exist in the ATD database',
+			'processed_count' => count( $atd_tires )
+		) );
+	} else {
+		wp_send_json_success( array(
+			'message' => 'Inventory scrub completed',
+			'out_of_stock_skus' => $skus,
+			'out_of_stock_count' => count( $skus ),
+			'processed_count' => count( $atd_tires )
+		) );
 	}
-
-	die;
 } );
 
 add_action( 'woocommerce_after_order_itemmeta', function ( $item_id, $item, $product ) {
@@ -403,33 +416,38 @@ add_action( 'woocommerce_after_order_itemmeta', function ( $item_id, $item, $pro
 }, 11, 3 );
 
 add_action( 'wp_ajax_atd_order', function () {
-	if ( ! isset( $_GET['oid'] ) || ! isset( $_GET['pid'] ) || ! isset( $_GET['iid'] ) ) {
-		echo 'Invalid Request';
-
-		die;
+	// Check user capabilities
+	if ( ! current_user_can( 'edit_shop_orders' ) ) {
+		wp_send_json_error( 'Insufficient permissions.', 403 );
 	}
 
-	$atd_order_id = wc_get_order_item_meta( $_GET['iid'], 'atd_order_id', true );
+	// Validate required parameters
+	$order_id = isset( $_GET['oid'] ) ? absint( $_GET['oid'] ) : 0;
+	$product_id = isset( $_GET['pid'] ) ? absint( $_GET['pid'] ) : 0;
+	$item_id = isset( $_GET['iid'] ) ? absint( $_GET['iid'] ) : 0;
+
+	if ( ! $order_id || ! $product_id || ! $item_id ) {
+		wp_send_json_error( 'Missing required parameters (oid, pid, iid).', 400 );
+	}
+
+	$atd_order_id = wc_get_order_item_meta( $item_id, 'atd_order_id', true );
 
 	if ( ! empty( $atd_order_id ) ) {
-		echo 'This order was already placed - ' . $atd_order_id;
-		die;
+		wp_send_json_error( 'Order already placed with ATD ID: ' . $atd_order_id, 409 );
 	}
 
-	$atd_order_lock = wc_get_order_item_meta( $_GET['iid'], 'atd_order_lock', true );
+	$atd_order_lock = wc_get_order_item_meta( $item_id, 'atd_order_lock', true );
 
 	if ( 1 == $atd_order_lock ) {
-		echo 'This action is processing.';
-
-		die;
+		wp_send_json_error( 'Order placement is already in progress.', 409 );
 	} else {
-		wc_update_order_item_meta( $_GET['iid'], 'atd_order_lock', 1 );
+		wc_update_order_item_meta( $item_id, 'atd_order_lock', 1 );
 	}
 
 	$shipping               = array();
-	$order                  = new WC_Order( $_GET['oid'] );
-	$sku                    = get_post_meta( $_GET['pid'], '_sku', true );
-	$item                   = new WC_Order_Item_Product( $_GET['iid'] );
+	$order                  = new WC_Order( $order_id );
+	$sku                    = get_post_meta( $product_id, '_sku', true );
+	$item                   = new WC_Order_Item_Product( $item_id );
 	$qty                    = $item->get_quantity();
 	$order_number           = $order->get_order_number();
 	$shipping['first_name'] = $order->get_shipping_first_name();
@@ -443,24 +461,21 @@ add_action( 'wp_ajax_atd_order', function () {
 	$shipping['email']      = $order->get_billing_email();
 
 	$key = defined( 'ATD_API_KEY' ) ? ATD_API_KEY : null;
-
-	if ( empty ( $key ) ) {
-		echo "No ATD_API_KEY constant configured.";
-		die;
+	if ( empty( $key ) ) {
+		wc_delete_order_item_meta( $item_id, 'atd_order_lock' );
+		wp_send_json_error( 'ATD_API_KEY constant not configured.', 500 );
 	}
 
 	$username = defined( 'ATD_USERNAME' ) ? ATD_USERNAME : null;
-
-	if ( empty ( $username ) ) {
-		echo "No ATD_USERNAME constant configured.";
-		die;
+	if ( empty( $username ) ) {
+		wc_delete_order_item_meta( $item_id, 'atd_order_lock' );
+		wp_send_json_error( 'ATD_USERNAME constant not configured.', 500 );
 	}
 
 	$password = defined( 'ATD_PASSWORD' ) ? ATD_PASSWORD : null;
-
-	if ( empty ( $password ) ) {
-		echo "No ATD_PASSWORD constant configured.";
-		die;
+	if ( empty( $password ) ) {
+		wc_delete_order_item_meta( $item_id, 'atd_order_lock' );
+		wp_send_json_error( 'ATD_PASSWORD constant not configured.', 500 );
 	}
 
 	$header      = [
@@ -542,17 +557,26 @@ XML;
 	$response  = simplexml_load_string( $clean_xml );
 
 	if ( isset( $response->Body->Fault ) ) {
-		header( 'Content-Type: text/plain' );
-		print_r( $response );
+		wc_delete_order_item_meta( $item_id, 'atd_order_lock' );
+		wp_send_json_error( array(
+			'message' => 'ATD API Error',
+			'fault' => (string) $response->Body->Fault->faultstring
+		), 502 );
+	}
 
-		die;
+	if ( ! isset( $response->Body->placeOrderResponse->order->orderNumber ) ) {
+		wc_delete_order_item_meta( $item_id, 'atd_order_lock' );
+		wp_send_json_error( 'Invalid API response: missing order number.', 502 );
 	}
 
 	$atd_order_id = (string) $response->Body->placeOrderResponse->order->orderNumber;
 
-	wc_delete_order_item_meta( $_GET['iid'], 'atd_order_lock' );
-	wc_update_order_item_meta( $_GET['iid'], 'atd_order_id', $atd_order_id );
-	wp_redirect( admin_url( 'post.php?post=' . $_GET['oid'] . '&action=edit' ) );
+	wc_delete_order_item_meta( $item_id, 'atd_order_lock' );
+	wc_update_order_item_meta( $item_id, 'atd_order_id', $atd_order_id );
 
-	die;
+	wp_send_json_success( array(
+		'message' => 'Order placed successfully with ATD',
+		'atd_order_id' => $atd_order_id,
+		'redirect_url' => admin_url( 'post.php?post=' . $order_id . '&action=edit' )
+	) );
 } );
