@@ -1,0 +1,258 @@
+/**
+ * ATD Integration Admin Styles
+ *
+ * Styles for order placement interface
+ */
+
+/* Order Controls Container */
+.atd-order-controls {
+    display: inline-block;
+    margin-top: 5px;
+}
+
+/* ATD Order Button */
+.atd-order-button {
+    background: #d63638;
+    border-color: #d63638;
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 8px;
+    height: auto;
+    line-height: 1.4;
+    text-shadow: none;
+    transition: all 0.2s ease;
+}
+
+.atd-order-button:hover {
+    background: #b32d2e;
+    border-color: #b32d2e;
+    color: #fff;
+}
+
+.atd-order-button:focus {
+    background: #d63638;
+    border-color: #d63638;
+    color: #fff;
+    box-shadow: 0 0 0 1px #fff, 0 0 0 3px #d63638;
+}
+
+.atd-order-button.atd-loading {
+    background: #999;
+    border-color: #999;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Status Messages */
+.atd-order-status {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
+.atd-order-status.atd-loading {
+    color: #646970;
+}
+
+.atd-order-status.atd-loading .spinner {
+    float: none;
+    margin: 0 4px 0 0;
+    vertical-align: middle;
+}
+
+.atd-order-status.atd-success {
+    color: #00a32a;
+    font-weight: 500;
+}
+
+.atd-order-status.atd-success .dashicons {
+    color: #00a32a;
+    margin-right: 4px;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+}
+
+.atd-order-status.atd-error {
+    color: #d63638;
+    font-weight: 500;
+}
+
+.atd-order-status.atd-error .dashicons {
+    color: #d63638;
+    margin-right: 4px;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+}
+
+/* Success Status for Already Placed Orders */
+.atd-order-status.atd-order-success {
+    color: #00a32a;
+    font-weight: 500;
+    background: #f0f9f0;
+    padding: 4px 8px;
+    border-radius: 3px;
+    border: 1px solid #c6e1c6;
+    display: inline-block;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 782px) {
+    .atd-order-button {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+
+    .atd-order-status {
+        display: block;
+        margin-left: 0;
+        margin-top: 5px;
+    }
+}
+
+/* Animation for status changes */
+.atd-order-status {
+    transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.atd-order-status:empty {
+    display: none !important;
+}
+
+/* WordPress admin spinner override */
+.atd-order-status .spinner.is-active {
+    visibility: visible;
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    background-size: 16px 16px;
+}
+
+/* Link styles within status messages */
+.atd-order-status a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+.atd-order-status a:hover {
+    text-decoration: none;
+}
+
+/* === Inventory Scrubber Styles === */
+
+/* Scrubber Controls Container */
+.atd-scrubber-controls {
+    margin: 10px 0;
+}
+
+/* ATD Scrubber Button */
+.atd-scrubber-button {
+    font-size: 16px;
+    padding: 8px 16px;
+    height: auto;
+    line-height: 1.4;
+    min-width: 200px;
+    transition: all 0.2s ease;
+}
+
+.atd-scrubber-button.atd-loading {
+    background: #999;
+    border-color: #999;
+    cursor: not-allowed;
+    opacity: 0.7;
+    color: #fff;
+}
+
+/* Scrubber Status Messages */
+.atd-scrubber-status {
+    display: inline-block;
+    margin-left: 15px;
+    font-size: 14px;
+    line-height: 1.4;
+    vertical-align: middle;
+    max-width: 500px;
+}
+
+.atd-scrubber-status.atd-loading {
+    color: #646970;
+    font-weight: 500;
+}
+
+.atd-scrubber-status.atd-loading .spinner {
+    float: none;
+    margin: 0 6px 0 0;
+    vertical-align: middle;
+}
+
+.atd-scrubber-status.atd-success {
+    color: #00a32a;
+    font-weight: 500;
+    background: #f0f9f0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #c6e1c6;
+}
+
+.atd-scrubber-status.atd-success .dashicons {
+    color: #00a32a;
+    margin-right: 6px;
+    vertical-align: middle;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+}
+
+.atd-scrubber-status.atd-error {
+    color: #d63638;
+    font-weight: 500;
+    background: #fdf2f2;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+}
+
+.atd-scrubber-status.atd-error .dashicons {
+    color: #d63638;
+    margin-right: 6px;
+    vertical-align: middle;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+}
+
+/* Scrubber Results Details */
+.atd-scrubber-details {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #646970;
+}
+
+.atd-scrubber-details strong {
+    color: #2c3338;
+}
+
+/* Responsive adjustments for scrubber */
+@media (max-width: 782px) {
+    .atd-scrubber-button {
+        font-size: 14px;
+        padding: 10px 14px;
+        min-width: 180px;
+    }
+
+    .atd-scrubber-status {
+        display: block;
+        margin-left: 0;
+        margin-top: 8px;
+        max-width: none;
+    }
+
+    .atd-scrubber-controls {
+        margin: 15px 0;
+    }
+}
