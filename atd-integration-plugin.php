@@ -69,7 +69,7 @@ function atd_tracking_numbers_callback() {
 	) );
 
 	foreach ( $all_atd_items as $row ) {
-		if ( ! isset( $row->meta_value ) || empty( $row->meta_value ) ) {
+		if ( empty( $row->meta_value ) ) {
 			continue;
 		}
 
