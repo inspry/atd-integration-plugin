@@ -94,8 +94,7 @@ XML;
 		$ch          = curl_init();
 		curl_setopt( $ch, CURLOPT_URL, 'https://ws.atdconnect.com/ws/3_4/orderStatus.wsdl' );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 0 );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 
 		$headers = array();
 		array_push( $headers, "Content-Type: text/xml; charset=utf-8" );
@@ -362,8 +361,7 @@ XML;
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_URL, 'https://sth.atdconnect.com/ws/1_1/products.wsdl' );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 0 );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 
 		$headers = array();
 		array_push( $headers, "Content-Type: text/xml; charset=utf-8" );
@@ -530,8 +528,7 @@ XML;
 	$ch          = curl_init();
 	curl_setopt( $ch, CURLOPT_URL, 'https://sth.atdconnect.com/ws/1_1/orderShipToHome.wsdl' );
 	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-	curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
-	curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 0 );
+	curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
 
 	$headers = array();
 	array_push( $headers, "Content-Type: text/xml; charset=utf-8" );

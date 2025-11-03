@@ -18,6 +18,7 @@ Requires the following PHP constants to be defined. It is recommended to place t
 
 **v2.0.0**:
 
+- Remove cURL options that disabled SSL validation.
 - Use `$wpdb->prepare` on SQL queries.
 
 **v1.0.1**: Remove unused atd_inventory_update WP-CLI command.
