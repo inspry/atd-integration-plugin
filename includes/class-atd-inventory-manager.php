@@ -166,7 +166,7 @@ class ATD_Inventory_Manager {
 			WHERE
 			    meta_key = %s
 			    AND {$wpdb->posts}.post_date BETWEEN CURDATE() - INTERVAL 1 MONTH AND CURDATE() + INTERVAL 1 DAY
-			    AND {$wpdb->posts}.post_status NOT IN(%s, %s, %s, %s, %s)
+			    AND {$wpdb->posts}.post_status NOT IN(%s, %s, %s, %s)
 			    AND order_itemmeta.order_item_id NOT IN(
 			        SELECT order_item_id
 			        FROM {$wpdb->prefix}woocommerce_order_itemmeta
@@ -178,7 +178,6 @@ class ATD_Inventory_Manager {
 			'wc-failed',
 			'wc-cancelled',
 			'wc-completed',
-			'wc-completed-package',
 			'atd_order_tracking_number'
 		) );
 
@@ -210,7 +209,7 @@ class ATD_Inventory_Manager {
 			        WHERE
 			            {$wpdb->posts}.post_date BETWEEN CURDATE() - INTERVAL 1 MONTH AND CURDATE() + INTERVAL 1 DAY
 			            AND inner_meta.meta_key = %s
-			            AND {$wpdb->posts}.post_status NOT IN(%s, %s, %s, %s, %s)
+			            AND {$wpdb->posts}.post_status NOT IN(%s, %s, %s, %s)
 			    )
 			    AND outer_meta.meta_key = %s
 			ORDER BY order_id ASC",
@@ -219,7 +218,6 @@ class ATD_Inventory_Manager {
 			'wc-failed',
 			'wc-cancelled',
 			'wc-completed',
-			'wc-completed-package',
 			'_product_id'
 		) );
 

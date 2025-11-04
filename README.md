@@ -25,6 +25,10 @@ The plugin follows a modular object-oriented architecture:
 
 ## Changelog
 
+**v2.0.1**:
+
+- Remove references to unused `completed-package` order status.
+
 **v2.0.0**:
 
 - **MAJOR REFACTOR**: Completely restructured plugin into modular classes
