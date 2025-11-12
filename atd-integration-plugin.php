@@ -3,7 +3,7 @@
  * Plugin Name: ATD Integration
  * Plugin URI: https://www.inspry.com
  * Description: A WordPress plugin that allows placing orders via ATD's API.
- * Version: 2.1.0
+ * Version: 2.1.1
  * Requires at least: 6.8.3
  * Requires PHP: 8.3
  * Author: Inspry
@@ -22,7 +22,7 @@ class ATD_Integration_Plugin extends RamTrading_Abstract_Plugin {
 
 	protected function setup_constants(): void {
 		$this->plugin_file = __FILE__;
-		$this->plugin_version = '2.1.0';
+		$this->plugin_version = '2.1.1';
 		$this->plugin_prefix = 'ATD_INTEGRATION';
 		$this->required_plugins = ['woocommerce', 'woocommerce-shipment-tracking', 'advanced-custom-fields'];
 	}

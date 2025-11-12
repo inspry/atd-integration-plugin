@@ -84,12 +84,16 @@ class ATD_Admin {
 			}
 		}
 
+		$plugin = ATD_Integration_Plugin::get_instance();
+		$plugin_dir = $plugin->get_plugin_dir();
+		$plugin_version = $plugin->get_plugin_version();
+
 		// Enqueue JavaScript
 		wp_enqueue_script(
 			'atd-admin',
-			ATD_INTEGRATION_PLUGIN_URL . 'assets/js/admin.js',
+			$plugin_dir . 'assets/js/admin.js',
 			array( 'jquery' ),
-			ATD_INTEGRATION_PLUGIN_VERSION,
+			$plugin_version,
 			true
 		);
 
@@ -111,9 +115,9 @@ class ATD_Admin {
 		// Enqueue CSS
 		wp_enqueue_style(
 			'atd-admin',
-			ATD_INTEGRATION_PLUGIN_URL . 'assets/css/admin.css',
+			$plugin_dir . 'assets/css/admin.css',
 			array(),
-			ATD_INTEGRATION_PLUGIN_VERSION
+			$plugin_version,
 		);
 	}
 

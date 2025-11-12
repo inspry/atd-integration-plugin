@@ -29,6 +29,8 @@ The plugin follows a modular object-oriented architecture:
 
 ## Changelog
 
+**v2.1.1**: Fix fatal error due to usage of old plugin constants.
+
 **v2.1.0**: Refactor to use ramtrading-core classes.
 
 **v2.0.1**:
