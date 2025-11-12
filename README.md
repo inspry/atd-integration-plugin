@@ -2,6 +2,10 @@
 
 A WordPress plugin that allows placing orders via ATD's API.
 
+## Dependencies
+
+**Requires MU Plugin:** [ramtrading-core](https://github.com/inspry/ramtrading-core)
+
 ## Usage
 
 Requires the following PHP constants to be defined. It is recommended to place these constants in the `wp-config.php` file.
@@ -24,6 +28,8 @@ The plugin follows a modular object-oriented architecture:
 - [ ] Location number is hardcoded (should be configurable).
 
 ## Changelog
+
+**v2.1.0**: Refactor to use ramtrading-core classes.
 
 **v2.0.1**:
 

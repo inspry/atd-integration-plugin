@@ -3,40 +3,43 @@
  * Plugin Name: ATD Integration
  * Plugin URI: https://www.inspry.com
  * Description: A WordPress plugin that allows placing orders via ATD's API.
- * Version: 2.0.1
+ * Version: 2.1.0
  * Requires at least: 6.8.3
  * Requires PHP: 8.3
  * Author: Inspry
  * Author URI: https://www.inspry.com
  * Requires Plugins: woocommerce, woocommerce-shipment-tracking, advanced-custom-fields
+ * Requires MU Plugin: ramtrading-core
  *
  * @package ATD_Integration
  */
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+// Prevent direct access
+defined( 'ABSPATH' ) || exit;
 
-// Define plugin constants.
-define( 'ATD_INTEGRATION_PLUGIN_VERSION', '2.0.1' );
-define( 'ATD_INTEGRATION_PLUGIN_FILE', __FILE__ );
-define( 'ATD_INTEGRATION_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'ATD_INTEGRATION_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+// Initialize the plugin
+class ATD_Integration_Plugin extends RamTrading_Abstract_Plugin {
 
-/**
- * ATD Integration Main Plugin Class
- *
- * @since 2.0.0
- */
-class ATD_Integration_Plugin {
+	protected function setup_constants(): void {
+		$this->plugin_file = __FILE__;
+		$this->plugin_version = '2.1.0';
+		$this->plugin_prefix = 'ATD_INTEGRATION';
+		$this->required_plugins = ['woocommerce', 'woocommerce-shipment-tracking', 'advanced-custom-fields'];
+	}
 
-	/**
-	 * Plugin instance
-	 *
-	 * @var ATD_Integration_Plugin|null
-	 */
-	private static ?ATD_Integration_Plugin $instance = null;
+	protected function init_hooks(): void {
+		$this->include_files();
+		$this->init_classes();
+
+		// WP-CLI command
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			WP_CLI::add_command( 'atd_tracking_numbers', array( $this, 'cli_tracking_numbers_command' ) );
+		}
+	}
+
+	protected function get_plugin_name(): string {
+		return 'ATD Integration';
+	}
 
 	/**
 	 * ATD Admin instance
@@ -60,49 +63,15 @@ class ATD_Integration_Plugin {
 	private ATD_Inventory_Manager $inventory_manager;
 
 	/**
-	 * Get plugin instance
-	 *
-	 * @return ATD_Integration_Plugin
-	 */
-	public static function get_instance(): ATD_Integration_Plugin {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-
-	/**
-	 * Constructor
-	 */
-	private function __construct() {
-		$this->include_files();
-		$this->init_hooks();
-		$this->init_classes();
-	}
-
-	/**
 	 * Include required files
 	 */
 	private function include_files(): void {
-		require_once ATD_INTEGRATION_PLUGIN_DIR . 'includes/class-atd-api-client.php';
-		require_once ATD_INTEGRATION_PLUGIN_DIR . 'includes/class-atd-order-manager.php';
-		require_once ATD_INTEGRATION_PLUGIN_DIR . 'includes/class-atd-inventory-manager.php';
-		require_once ATD_INTEGRATION_PLUGIN_DIR . 'includes/class-atd-admin.php';
+		require_once $this->plugin_dir . 'includes/class-atd-api-client.php';
+		require_once $this->plugin_dir . 'includes/class-atd-order-manager.php';
+		require_once $this->plugin_dir . 'includes/class-atd-inventory-manager.php';
+		require_once $this->plugin_dir . 'includes/class-atd-admin.php';
 	}
 
-	/**
-	 * Initialize WordPress hooks
-	 */
-	private function init_hooks(): void {
-		// Plugin lifecycle hooks
-		register_activation_hook( ATD_INTEGRATION_PLUGIN_FILE, array( $this, 'activate' ) );
-		register_deactivation_hook( ATD_INTEGRATION_PLUGIN_FILE, array( $this, 'deactivate' ) );
-
-		// WP-CLI command
-		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			WP_CLI::add_command( 'atd_tracking_numbers', array( $this, 'cli_tracking_numbers_command' ) );
-		}
-	}
 
 	/**
 	 * Initialize class instances
@@ -118,27 +87,6 @@ class ATD_Integration_Plugin {
 		}
 	}
 
-	/**
-	 * Plugin activation
-	 */
-	public function activate(): void {
-		// Check for required plugins
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
-			deactivate_plugins( plugin_basename( ATD_INTEGRATION_PLUGIN_FILE ) );
-			wp_die( 'ATD Integration requires WooCommerce to be active.' );
-		}
-
-		// Flush rewrite rules
-		flush_rewrite_rules();
-	}
-
-	/**
-	 * Plugin deactivation
-	 */
-	public function deactivate(): void {
-		// Clean up any temporary data
-		flush_rewrite_rules();
-	}
 
 	/**
 	 * WP-CLI command for tracking numbers
@@ -240,14 +188,4 @@ class ATD_Integration_Plugin {
 	}
 }
 
-/**
- * Initialize the plugin
- *
- * @return ATD_Integration_Plugin
- */
-function atd_integration(): ATD_Integration_Plugin {
-	return ATD_Integration_Plugin::get_instance();
-}
-
-// Initialize the plugin
-atd_integration();
+ATD_Integration_Plugin::get_instance();
